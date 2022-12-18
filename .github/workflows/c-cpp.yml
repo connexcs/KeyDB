@@ -14,18 +14,10 @@ jobs:
     steps:
     - name: Install Dependancies
       run: sudo apt-get install -y build-essential nasm autotools-dev autoconf libjemalloc-dev tcl tcl-dev uuid-dev libcurl4-openssl-dev libbz2-dev libzstd-dev liblz4-dev libsnappy-dev libssl-dev
-    - name: Mark github workspace as safe
-      run: git config --global --add safe.directory '*'
     - uses: actions/checkout@v3
-    - name: Checkout submodules
-      uses: srt32/git-actions@v0.0.3
       with:
-        args: git submodule update --init --recursive
+        submodules: 'true'
     - name: configure
       run: ./configure
     - name: make
       run: make USE_SYSTEMD=yes
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
