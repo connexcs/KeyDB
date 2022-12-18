@@ -19,3 +19,15 @@ jobs:
         submodules: 'true'
     - name: make
       run: make USE_SYSTEMD=yes
+
+    - name: Store Debian package artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Debian binary package files
+        path: '*.deb'
+
+    - name: Store Debian package build info
+      uses: actions/upload-artifact@v2
+      with:
+        name: Debian buildinfo file
+        path: '*.buildinfo'
