@@ -21,7 +21,7 @@ jobs:
       run: make USE_SYSTEMD=yes
       
     - name: Build Packages
-      run: cd ./KeyDB/KeyDB/pkg/deb/deb-buildsource.sh
+      run: cd ./KeyDB/KeyDB/pkg/deb/ && ./deb-buildsource.sh
 
     - name: Store Debian package artifacts
       uses: actions/upload-artifact@v2
