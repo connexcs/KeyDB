@@ -15,7 +15,7 @@ jobs:
     - name: Install Dependancies
       run: sudo apt-get install -y build-essential nasm autotools-dev autoconf libjemalloc-dev tcl tcl-dev uuid-dev libcurl4-openssl-dev libbz2-dev libzstd-dev liblz4-dev libsnappy-dev libssl-dev
     - name: Mark github workspace as safe
-      run: git config --global --add safe.directory /github/workspace
+      run: git config --global --add safe.directory '*'
     - uses: actions/checkout@v3
     - name: Checkout submodules
       uses: srt32/git-actions@v0.0.3
