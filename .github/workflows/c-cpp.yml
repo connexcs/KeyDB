@@ -19,6 +19,9 @@ jobs:
         submodules: 'true'
     - name: make
       run: make USE_SYSTEMD=yes
+      
+    - name: Build Packages
+      run: ./deb-buildsource.sh
 
     - name: Store Debian package artifacts
       uses: actions/upload-artifact@v2
