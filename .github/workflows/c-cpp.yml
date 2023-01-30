@@ -21,13 +21,13 @@ jobs:
       run: make USE_SYSTEMD=yes
       
     - name: Build Packages
-      run: cd ./KeyDB/KeyDB/pkg/deb/ && ./deb-buildsource.sh
+      run: cd ./KeyDB/pkg/deb/ && ./deb-buildsource.sh
 
     - name: Store Debian package artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Debian binary package files
-        path: '*.deb'
+        path: './KeyDB/pkg/deb/deb_files_generated/*'
 
     - name: Store Debian package build info
       uses: actions/upload-artifact@v2
