@@ -2703,10 +2703,15 @@ struct rdbInsertJob : public JobBase
     long long expiretime;
     long long lru_idle;
     long long lfu_freq;
-    std::vector<std::pair<robj_sharedptr, long long>> vecsubexpires;
+    std::vector<std::pair<sds, long long>> vecsubexpires;
 
     void addSubexpireKey(robj *subkey, long long when) {
-        vecsubexpires.push_back(std::make_pair(robj_sharedptr(subkey), when));
+        // FIX: Instead of storing the robj* and duplicating later, extract and duplicate
+        // the string immediately. This avoids holding both the robj* AND the duplicated
+        // string in memory during loading, reducing peak memory usage.
+        sds subkeyStr = sdsdup(szFromObj(subkey));
+        vecsubexpires.push_back(std::make_pair(subkeyStr, when));
+        // We've extracted the string, so caller can free the robj* immediately
         decrRefCount(subkey);
     }
 
@@ -2735,6 +2740,11 @@ struct rdbInsertJob : public JobBase
             sdsfree(key);
         if (val)
             decrRefCount(val);
+        // Free all subexpire strings
+        for (auto &pair : vecsubexpires) {
+            if (pair.first)
+                sdsfree(pair.first);
+        }
     }
 };
 
@@ -2943,8 +2953,12 @@ public:
 
                 for (auto &pair : job.vecsubexpires) 
                 {
-                    setExpire(NULL, job.db, &keyobj, pair.first, pair.second);
-                    replicateSubkeyExpire(job.db, &keyobj, pair.first.get(), pair.second);
+                    // Create a temporary string object wrapper for the sds string
+                    // We use OBJ_ENCODING_RAW since it's just a wrapper
+                    redisObjectStack subkeyObj;
+                    initStaticStringObject(subkeyObj, pair.first);
+                    setExpire(NULL, job.db, &keyobj, &subkeyObj, pair.second);
+                    replicateSubkeyExpire(job.db, &keyobj, &subkeyObj, pair.second);
                 }
 
                 job.val = nullptr;  // don't free this as we moved ownership to the DB
