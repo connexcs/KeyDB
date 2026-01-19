@@ -1,0 +1,96 @@
+name: Build Ubuntu
+
+on:
+  push:
+    branches: [main, unstable]
+  pull_request:
+    branches: [main, unstable]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on Ubuntu ${{ matrix.ubuntu-version }}
+    runs-on: ubuntu-${{ matrix.ubuntu-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu-version: ['20.04', '24.04']
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          debhelper \
+          dpkg-dev \
+          systemd \
+          libsystemd-dev \
+          procps \
+          pkg-config \
+          build-essential \
+          tcl \
+          tcl-dev \
+          uuid-dev \
+          libcurl4-openssl-dev \
+          nasm \
+          autotools-dev \
+          autoconf \
+          libjemalloc-dev \
+          libssl-dev \
+          libsnappy-dev \
+          zlib1g-dev \
+          libbz2-dev \
+          liblz4-dev \
+          libzstd-dev \
+          librocksdb-dev
+
+    - name: Setup debian directory
+      run: |
+        cp -r pkg/deb/debian .
+
+    - name: Build .deb packages
+      run: |
+        # Skip tests during package build - tests run in Machamp CI
+        export DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)"
+        dpkg-buildpackage -us -uc -b
+
+    - name: Verify build
+      run: |
+        ./src/keydb-server --version
+        ./src/keydb-cli --version
+
+    # Note: Full test suite (TLS, cluster, sentinel, module, rotation tests)
+    # runs in Machamp CI pipeline. This workflow focuses on multi-distro builds.
+
+    - name: Package artifacts
+      run: |
+        mkdir -p dist
+        # Zip raw binaries
+        zip -j dist/keydb-ubuntu-${{ matrix.ubuntu-version }}.zip \
+          src/keydb-server \
+          src/keydb-cli \
+          src/keydb-benchmark \
+          src/keydb-check-aof \
+          src/keydb-check-rdb \
+          src/keydb-sentinel
+        # Collect .deb packages
+        mv ../*.deb dist/
+
+    - name: Upload binary artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: keydb-ubuntu-${{ matrix.ubuntu-version }}
+        path: dist/keydb-ubuntu-${{ matrix.ubuntu-version }}.zip
+        retention-days: 7
+
+    - name: Upload .deb artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: keydb-deb-ubuntu-${{ matrix.ubuntu-version }}
+        path: dist/*.deb
+        retention-days: 7
