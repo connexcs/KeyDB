@@ -53,10 +53,16 @@ jobs:
       run: |
         cp -r pkg/deb/debian .
 
+    - name: Build dependencies
+      run: |
+        cd deps
+        make hiredis jemalloc lua hdr_histogram rocksdb
+
     - name: Build .deb packages
       run: |
         # Skip tests during package build - tests run in Machamp CI
         export DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)"
+        export BUILD_TLS=yes
         dpkg-buildpackage -us -uc -b
 
     - name: Verify build
