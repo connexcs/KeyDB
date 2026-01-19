@@ -19,17 +19,6 @@ extern "C" {
 #ifdef MOTD
 #include <curl/curl.h> 
 
-#if !defined(USE_SYSTEM_HIREDIS) && defined(CLIENT)
-extern "C" {
-__attribute__ ((weak)) hisds hi_sdscatlen(hisds s, const void *t, size_t len) {
-    return sdscatlen(s, t, len);
-}
-__attribute__ ((weak)) hisds hi_sdscat(hisds s, const char *t) {
-    return sdscat(s, t);
-}
-}
-#endif
-
 static const char *szMotdCachePath()
 {
     static sds sdsMotdCachePath = NULL;
