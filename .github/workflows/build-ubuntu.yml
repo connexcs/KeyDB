@@ -56,7 +56,7 @@ jobs:
     - name: Build dependencies
       run: |
         cd deps
-        make hiredis jemalloc lua hdr_histogram rocksdb
+        make -j$(nproc) hiredis jemalloc lua hdr_histogram rocksdb
 
     - name: Build .deb packages
       run: |
